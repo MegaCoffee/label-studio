@@ -1,3 +1,7 @@
+# Label Studio 集成oauth2.0 + keycloak
+# 文档见石墨: https://www.shimo.megarobo.tech/docs/zdkyBYlzLjfVxQA6/ 《Label-Studio 集成oauth2.0 + keycloak》
+
+
 <img src="https://raw.githubusercontent.com/heartexlabs/label-studio/master/images/ls_github_header.png"/>
 
 ![GitHub](https://img.shields.io/github/license/heartexlabs/label-studio?logo=heartex) ![label-studio:build](https://github.com/heartexlabs/label-studio/workflows/label-studio:build/badge.svg) ![GitHub release](https://img.shields.io/github/v/release/heartexlabs/label-studio?include_prereleases)
