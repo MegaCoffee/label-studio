@@ -46,9 +46,10 @@ def get_user(token, username):
     r = requests.get(url=url,headers=headers)
     if str(r.status_code).startswith("20"):
         logger.info("get_user: {}".format(r.content))
-        if not r.content:
+        if r.content != '':
             return json.loads(r.content.decode())[0]["id"]
         else:
+            logger.error("get_user: {}".format(r.content))
             return ""
     else:
         raise ValueError("{}__{}__{}".format(r.status_code, r.reason, r.content))
@@ -70,7 +71,9 @@ def logout_keycloak_handler(request):
         user = None
         return
     token = get_keycloak_token()
+    logger.info("================ get keycloak token success ===============")
     user_id = get_user(token, user.username)
+    logger.info("================ get keycloak userid: {} ===============".format(user_id))
     if user_id:
         logout_keycloak(token, user_id)
 
@@ -78,6 +81,7 @@ def logout_keycloak_handler(request):
 @login_required
 def logout(request):
     # logout keycloak
+    logger.info("================ start logout keycloak ===============")
     logout_keycloak_handler(request)
     auth.logout(request)
 
