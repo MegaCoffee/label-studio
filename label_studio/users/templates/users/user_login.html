@@ -13,6 +13,9 @@
       {% endfor %}
     {% endif %}
     <p><button type="submit" aria-label="Log In" class="ls-button ls-button_look_primary">Log in</button></p>
+    <p><button aria-label="Login with Keycloak" class="ls-button">
+      <a href="{% url 'social:begin' 'keycloak' %}">Login with Keycloak</a>
+    </button></p>
   </form>
 
 {% endblock %}

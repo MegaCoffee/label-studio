@@ -187,6 +187,7 @@ INSTALLED_APPS = [
     'ml',
     'webhooks',
     'labels_manager',
+    'social_django',
 ]
 
 MIDDLEWARE = [
@@ -206,6 +207,7 @@ MIDDLEWARE = [
     'core.middleware.ContextLogMiddleware',
     'core.middleware.DatabaseIsLockedRetryMiddleware',
     'core.current_request.ThreadLocalMiddleware',
+    "social_django.middleware.SocialAuthExceptionMiddleware"
 ]
 
 REST_FRAMEWORK = {
@@ -244,7 +246,11 @@ ALLOWED_HOSTS = ['*']
 
 # Auth modules
 AUTH_USER_MODEL = 'users.User'
-AUTHENTICATION_BACKENDS = ['rules.permissions.ObjectPermissionBackend', 'django.contrib.auth.backends.ModelBackend',]
+AUTHENTICATION_BACKENDS = [
+    'social_core.backends.keycloak.KeycloakOAuth2',
+    'rules.permissions.ObjectPermissionBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 USE_USERNAME_FOR_LOGIN = False
 
 DISABLE_SIGNUP_WITHOUT_LINK = get_bool_env('DISABLE_SIGNUP_WITHOUT_LINK', False)
@@ -272,6 +278,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.settings',
+                "social_django.context_processors.backends",
+                "social_django.context_processors.login_redirect",
             ],
             'builtins': ['django.templatetags.i18n'],
         },
@@ -486,3 +494,7 @@ FEATURE_FLAGS_OFFLINE = get_bool_env('FEATURE_FLAGS_OFFLINE', True)
 # default value for feature flags (if not overrided by environment or client)
 FEATURE_FLAGS_DEFAULT_VALUE = False
 
+SOCIAL_AUTH_KEYCLOAK_KEY = get_env('KEYCLOAK_CLIENT_ID') # Client ID
+SOCIAL_AUTH_KEYCLOAK_PUBLIC_KEY = get_env('KEYCLOAK_REALM_PUBLIC_KEY') # Realm 公钥
+SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL = '{}/auth/realms/{}/protocol/openid-connect/auth'.format(get_env('KEYCLOAK_HOST'), get_env('KEYCLOAK_REALM')) # keyclock鉴权链接，注意realms/后面的名称是你的用的realm的名称
+SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL = '{}/auth/realms/{}/protocol/openid-connect/token'.format(get_env('KEYCLOAK_HOST'), get_env('KEYCLOAK_REALM'))# 获取keyclock 访问token的链接, 注意realms/后面的名称是你的用的realm的名称

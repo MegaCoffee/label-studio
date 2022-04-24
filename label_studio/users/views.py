@@ -1,7 +1,8 @@
 """This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
 """
 import logging
-
+import requests
+import json
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, reverse
 from django.contrib import auth
@@ -16,13 +17,70 @@ from users.functions import proceed_registration
 from organizations.models import Organization
 from organizations.forms import OrganizationSignupForm
 
+from label_studio.core.utils.params import get_env
 
 logger = logging.getLogger()
+
+def get_keycloak_token():
+    path = "auth/realms/master/protocol/openid-connect/token"
+    url = "{}/{}".format(get_env('KEYCLOAK_HOST'), path)
+    data = {
+        "client_id": "admin-cli",
+        "grant_type": "password",
+        "username": get_env('KEYCLOAK_MASTER_USERNAME'),
+        "password": get_env('KEYCLOAK_MASTER_PASSWORD')
+    }
+    r = requests.post(url=url, data=data)
+    # print(r)
+    if 200 == r.status_code:
+        return "bearer {}".format(json.loads(r.content.decode())["access_token"])
+    else:
+        raise ValueError(r.reason)
+
+
+def get_user(token, username):
+    path = "auth/admin/realms/{}/users".format(get_env('KEYCLOAK_REALM'))
+    url = "{}/{}".format(get_env('KEYCLOAK_HOST'), path)
+    url += "?username=" + username
+    headers = {"authorization": token}
+    r = requests.get(url=url,headers=headers)
+    if str(r.status_code).startswith("20"):
+        logger.info("get_user: {}".format(r.content))
+        if not r.content:
+            return json.loads(r.content.decode())[0]["id"]
+        else:
+            return ""
+    else:
+        raise ValueError("{}__{}__{}".format(r.status_code, r.reason, r.content))
+
+
+def logout_keycloak(token, user_id):
+    path = "auth/admin/realms/{}/users/{}/logout".format(get_env('KEYCLOAK_REALM'), user_id)
+    url = "{}/{}".format(get_env('KEYCLOAK_HOST'), path)
+    headers = {"authorization": token}
+    r = requests.post(url=url, headers=headers)
+    if str(r.status_code).startswith("20"):
+        logger.info("logout success".format(r.content))
+    else:
+        raise ValueError("{}__{}__{}".format(r.status_code, r.reason, r.content))
+
+def logout_keycloak_handler(request):
+    user = getattr(request, 'user', None)
+    if not getattr(user, 'is_authenticated', True):
+        user = None
+        return
+    token = get_keycloak_token()
+    user_id = get_user(token, user.username)
+    if user_id:
+        logout_keycloak(token, user_id)
 
 
 @login_required
 def logout(request):
+    # logout keycloak
+    logout_keycloak_handler(request)
     auth.logout(request)
+
     if settings.HOSTNAME:
         redirect_url = settings.HOSTNAME
         if not redirect_url.endswith('/'):
