@@ -46,7 +46,7 @@ def get_user(token, username):
     r = requests.get(url=url,headers=headers)
     if str(r.status_code).startswith("20"):
         logger.info("get_user: {}".format(r.content))
-        if r.content != '':
+        if r.content != '' and r.content.decode() != '[]':
             return json.loads(r.content.decode())[0]["id"]
         else:
             logger.error("get_user: {}".format(r.content))
