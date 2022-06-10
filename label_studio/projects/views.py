@@ -15,13 +15,21 @@ from core.utils.common import get_object_with_check_and_log
 from core.label_config import get_sample_task
 from core.utils.common import get_organization_from_request
 
-from organizations.models import Organization
+from organizations.models import Organization, OrganizationMember
 
 logger = logging.getLogger(__name__)
 
 
 @login_required
 def project_list(request):
+    # 获取当前用户信息, 如果没有加入默认组织则通过sql加入组织
+    user = request.user
+    try:
+        OrganizationMember.find_by_user(user_or_user_pk=user.pk, organization_pk=user.active_organization_id)
+    except Exception as e:
+        OrganizationMember.objects.create(user=user, organization=user.active_organization)
+
+
     return render(request, 'projects/list.html')
 
 
